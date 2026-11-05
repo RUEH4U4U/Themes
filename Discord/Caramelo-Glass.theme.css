@@ -1,0 +1,685 @@
+/**
+ * @name Caramelo Glass
+ * @author Caramelo Glass
+ * @version 1.0.0
+ * @description Tema glassmorphism em marrom-escuro, caramelo e pêssego. Painéis de vidro com blur sobre um papel de parede configurável por variável CSS.
+ */
+
+/* ==========================================================================
+   1. VARIÁVEIS E PALETA
+   --------------------------------------------------------------------------
+   Paleta-base (NÃO ALTERAR). Guardada como trios RGB para permitir alpha
+   com a sintaxe rgb(var(--cg-x) / 0.5). Nenhuma outra cor foi inventada:
+   toda variação é a mesma cor com outro alpha.
+
+   source_color / primary / surface_tint ....... #E49B67  -> --cg-primary
+   on_primary / on_secondary ................... #251E18  -> --cg-on-primary
+   primary_container ........................... #60422D
+   on_primary_container ........................ #F0A772
+   primary_fixed ............................... #F4D4BE
+   primary_fixed_dim ........................... #ECB893
+   on_primary_fixed ............................ #2C2521
+   on_primary_fixed_variant .................... #3B322B
+   secondary ................................... #D6CD5C (só detalhes pontuais)
+
+   Exceção intencional: cores semânticas do próprio Discord (verde de online,
+   vermelho de perigo/desligar chamada) NÃO são alteradas, por segurança de uso.
+   ========================================================================== */
+
+:root {
+  /* Paleta (trios RGB) */
+  --cg-primary: 228 155 103;
+  --cg-on-primary: 37 30 24;
+  --cg-primary-container: 96 66 45;
+  --cg-on-primary-container: 240 167 114;
+  --cg-primary-fixed: 244 212 190;
+  --cg-primary-fixed-dim: 236 184 147;
+  --cg-on-primary-fixed: 44 37 33;
+  --cg-on-primary-fixed-variant: 59 50 43;
+  --cg-secondary: 214 205 92;
+
+  /* Papel de parede -> veja a seção 11 */
+  --cg-wallpaper: none;
+  --cg-wallpaper-dim: 0.22;
+  --cg-wallpaper-fallback:
+    radial-gradient(90% 55% at 72% 58%, rgb(var(--cg-primary) / 0.55) 0%, rgb(var(--cg-primary-container) / 0.7) 32%, transparent 68%),
+    radial-gradient(60% 40% at 15% 85%, rgb(var(--cg-primary-container) / 0.6) 0%, transparent 70%),
+    linear-gradient(180deg, rgb(var(--cg-on-primary-fixed-variant)) 0%, rgb(var(--cg-primary-container)) 46%, rgb(var(--cg-on-primary)) 100%);
+
+  /* Arredondamento */
+  --cg-r-sm: 10px;
+  --cg-r-md: 12px;
+  --cg-r-lg: 13px;
+
+  /* Blur por nível de profundidade */
+  --cg-blur-rail: 18px;
+  --cg-blur-panel: 22px;
+  --cg-blur-chat: 6px;
+  --cg-blur-float: 28px;
+  --cg-saturate: 1.15;
+
+  /* Superfícies de vidro (alpha diferente em cada camada) */
+  --cg-glass-rail: rgb(var(--cg-on-primary) / 0.58);
+  --cg-glass-panel: rgb(var(--cg-on-primary-fixed) / 0.5);
+  --cg-glass-chat: rgb(var(--cg-on-primary) / 0.3);
+  --cg-glass-float: rgb(var(--cg-on-primary-fixed) / 0.84);
+  --cg-glass-field: rgb(var(--cg-on-primary) / 0.45);
+
+  /* Bordas, hover e seleção */
+  --cg-border: rgb(var(--cg-primary-fixed) / 0.1);
+  --cg-border-strong: rgb(var(--cg-primary-fixed) / 0.18);
+  --cg-hover: rgb(var(--cg-primary-fixed) / 0.07);
+  --cg-select: linear-gradient(90deg, rgb(var(--cg-primary) / 0.42), rgb(var(--cg-primary-container) / 0.55));
+  --cg-select-glow: inset 0 0 0 1px rgb(var(--cg-primary) / 0.35);
+
+  /* Sombras e luz */
+  --cg-shadow-panel: 0 10px 32px rgb(var(--cg-on-primary) / 0.45);
+  --cg-shadow-float: 0 18px 50px rgb(var(--cg-on-primary) / 0.7);
+  --cg-highlight: inset 0 1px 0 rgb(var(--cg-primary-fixed) / 0.08);
+
+  /* Texto */
+  --cg-text: rgb(var(--cg-primary-fixed));
+  --cg-text-dim: rgb(var(--cg-primary-fixed-dim) / 0.8);
+  --cg-text-muted: rgb(var(--cg-primary-fixed) / 0.5);
+
+  /* Movimento */
+  --cg-ease: 160ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Variáveis do Discord. Os nomes mais novos e os legados são ambos definidos;
+   os que a versão atual não usar são simplesmente ignorados pelo navegador. */
+:root,
+.theme-dark,
+.theme-darker,
+.theme-midnight,
+.theme-light,
+.visual-refresh {
+  /* Containers estruturais ficam transparentes: o vidro é aplicado por painel */
+  --background-base-lowest: transparent;
+  --background-base-lower: transparent;
+  --background-tertiary: transparent;
+
+  /* Superfícies residuais (translúcidas, sem blur próprio) */
+  --background-base-low: rgb(var(--cg-on-primary) / 0.35);
+  --background-primary: rgb(var(--cg-on-primary) / 0.2);
+  --background-secondary: rgb(var(--cg-on-primary-fixed) / 0.4);
+  --background-secondary-alt: rgb(var(--cg-on-primary) / 0.5);
+  --chat-background-default: transparent;
+  --background-surface-high: rgb(var(--cg-on-primary-fixed) / 0.6);
+  --background-surface-higher: rgb(var(--cg-on-primary-fixed-variant) / 0.7);
+  --background-surface-highest: rgb(var(--cg-on-primary-fixed-variant) / 0.85);
+  --background-floating: var(--cg-glass-float);
+  --background-accent: rgb(var(--cg-on-primary-fixed-variant) / 0.9);
+  --channeltextarea-background: var(--cg-glass-field);
+  --input-background: var(--cg-glass-field);
+
+  /* Estados */
+  --background-modifier-hover: var(--cg-hover);
+  --background-modifier-active: rgb(var(--cg-primary-fixed) / 0.11);
+  --background-modifier-selected: rgb(var(--cg-primary) / 0.22);
+  --background-modifier-accent: var(--cg-border);
+
+  /* Texto e ícones */
+  --text-default: var(--cg-text);
+  --text-normal: var(--cg-text);
+  --text-strong: rgb(var(--cg-primary-fixed));
+  --text-muted: var(--cg-text-muted);
+  --text-link: rgb(var(--cg-primary-fixed-dim));
+  --header-primary: var(--cg-text);
+  --header-secondary: var(--cg-text-dim);
+  --interactive-normal: var(--cg-text-dim);
+  --interactive-hover: var(--cg-text);
+  --interactive-active: rgb(var(--cg-on-primary-container));
+  --interactive-muted: rgb(var(--cg-primary-fixed) / 0.3);
+  --channels-default: var(--cg-text-dim);
+  --channel-icon: var(--cg-text-muted);
+
+  /* Marca (botões, switches, seleções que o Discord colore com a cor de marca) */
+  --brand-500: rgb(var(--cg-primary));
+  --brand-530: rgb(var(--cg-primary-fixed-dim));
+  --brand-560: rgb(var(--cg-on-primary-container));
+  --brand-600: rgb(var(--cg-primary-container));
+  --brand-experiment: rgb(var(--cg-primary));
+  --brand-experiment-560: rgb(var(--cg-on-primary-container));
+  --brand-experiment-600: rgb(var(--cg-primary-container));
+  --control-brand-foreground: rgb(var(--cg-primary));
+  --control-brand-foreground-new: rgb(var(--cg-primary));
+
+  /* Barras de rolagem */
+  --scrollbar-thin-thumb: rgb(var(--cg-primary) / 0.35);
+  --scrollbar-thin-track: transparent;
+  --scrollbar-auto-thumb: rgb(var(--cg-primary) / 0.35);
+  --scrollbar-auto-track: transparent;
+  --scrollbar-auto-scrollbar-color-thumb: rgb(var(--cg-primary) / 0.35);
+  --scrollbar-auto-scrollbar-color-track: transparent;
+}
+
+/* ==========================================================================
+   2. ESTRUTURA PRINCIPAL
+   ========================================================================== */
+
+html,
+body {
+  background-color: rgb(var(--cg-on-primary));
+}
+
+#app-mount {
+  background: transparent;
+}
+
+/* Barra de título do app: integrada ao papel de parede */
+:is([class^="bar_"], [class*=" bar_"]):has(> [class*="title_"]),
+[class*="titleBar_"] {
+  background: transparent;
+}
+
+/* ==========================================================================
+   3. BARRA DE SERVIDORES
+   ========================================================================== */
+
+:is(nav[class^="guilds_"], nav[class*=" guilds_"]) {
+  background: var(--cg-glass-rail);
+  -webkit-backdrop-filter: blur(var(--cg-blur-rail)) saturate(var(--cg-saturate));
+  backdrop-filter: blur(var(--cg-blur-rail)) saturate(var(--cg-saturate));
+  border: 1px solid var(--cg-border);
+  border-radius: var(--cg-r-lg);
+  box-shadow: var(--cg-shadow-panel), var(--cg-highlight);
+  margin: 0 4px 8px 8px;
+}
+
+/* Divisor entre início e servidores */
+[data-list-id="guildsnav"] [class*="guildSeparator_"] {
+  background: var(--cg-border-strong);
+  border-radius: 2px;
+}
+
+/* Indicador lateral de seleção/não-lido */
+[data-list-id="guildsnav"] [class*="pill_"] [class*="item_"] {
+  background: rgb(var(--cg-primary-fixed));
+}
+
+[data-list-id="guildsnav"] [class*="unread"] [class*="item_"] {
+  background: rgb(var(--cg-secondary)); /* detalhe pontual em amarelo */
+}
+
+/* ==========================================================================
+   4. BARRA DE CANAIS
+   ========================================================================== */
+
+:is([class^="sidebar_"], [class*=" sidebar_"]) {
+  background: var(--cg-glass-panel);
+  -webkit-backdrop-filter: blur(var(--cg-blur-panel)) saturate(var(--cg-saturate));
+  backdrop-filter: blur(var(--cg-blur-panel)) saturate(var(--cg-saturate));
+  border: 1px solid var(--cg-border);
+  border-radius: var(--cg-r-lg);
+  box-shadow: var(--cg-shadow-panel), var(--cg-highlight);
+  margin: 0 4px 8px 4px;
+  overflow: hidden;
+}
+
+/* Cabeçalho do servidor */
+:is([class^="sidebar_"], [class*=" sidebar_"]) header,
+:is([class^="sidebar_"], [class*=" sidebar_"]) [class*="headerContent_"] {
+  background: transparent;
+  box-shadow: none;
+  border-bottom: 1px solid var(--cg-border);
+  transition: background var(--cg-ease);
+}
+
+:is([class^="sidebar_"], [class*=" sidebar_"]) header:hover {
+  background: var(--cg-hover);
+}
+
+/* Itens de canal: hover e seleção */
+:is([class^="sidebar_"], [class*=" sidebar_"]) [class*="containerDefault_"] [class*="wrapper_"],
+:is([class^="sidebar_"], [class*=" sidebar_"]) [class*="channel_"] [class*="interactive_"] {
+  border-radius: var(--cg-r-sm);
+  transition: background var(--cg-ease), color var(--cg-ease);
+}
+
+:is([class^="sidebar_"], [class*=" sidebar_"]) [class*="modeSelected_"],
+:is([class^="sidebar_"], [class*=" sidebar_"]) [class*="selected_"][class*="interactive_"] {
+  background: var(--cg-select);
+  box-shadow: var(--cg-select-glow);
+  color: rgb(var(--cg-primary-fixed));
+}
+
+/* Título de categoria */
+:is([class^="sidebar_"], [class*=" sidebar_"]) [class*="containerDefault_"] h3,
+:is([class^="sidebar_"], [class*=" sidebar_"]) [class*="iconVisibility_"] {
+  letter-spacing: 0.04em;
+}
+
+/* Painel do usuário (rodapé) */
+:is([class^="sidebar_"], [class*=" sidebar_"]) section[class*="panels_"],
+:is([class^="sidebar_"], [class*=" sidebar_"]) [class*="panels_"] > div {
+  background: rgb(var(--cg-on-primary) / 0.35);
+  border-top: 1px solid var(--cg-border);
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   5. ÁREA DE CONVERSAS
+   ========================================================================== */
+
+:is([class^="chat_"], [class*=" chat_"]) {
+  background: var(--cg-glass-chat);
+  -webkit-backdrop-filter: blur(var(--cg-blur-chat)) saturate(var(--cg-saturate));
+  backdrop-filter: blur(var(--cg-blur-chat)) saturate(var(--cg-saturate));
+  border: 1px solid var(--cg-border);
+  border-radius: var(--cg-r-lg);
+  box-shadow: var(--cg-shadow-panel), var(--cg-highlight);
+  margin: 0 4px 8px 4px;
+  overflow: hidden;
+}
+
+:is([class^="chatContent_"], [class*=" chatContent_"]) {
+  background: transparent;
+}
+
+/* Barra superior e ferramentas */
+[class*="subtitleContainer_"],
+section[class*="title_"] {
+  background: rgb(var(--cg-on-primary) / 0.32);
+  border-bottom: 1px solid var(--cg-border);
+  box-shadow: none;
+}
+
+[class*="toolbar_"] [class*="iconWrapper_"],
+[class*="toolbar_"] [role="button"] {
+  border-radius: var(--cg-r-sm);
+  transition: background var(--cg-ease), color var(--cg-ease);
+}
+
+[class*="toolbar_"] [role="button"]:hover {
+  background: var(--cg-hover);
+  color: rgb(var(--cg-on-primary-container));
+}
+
+[class*="searchBar_"] {
+  background: var(--cg-glass-field);
+  border: 1px solid var(--cg-border);
+  border-radius: var(--cg-r-sm);
+}
+
+/* Mensagens */
+[id^="chat-messages-"] {
+  border-radius: var(--cg-r-sm);
+  transition: background var(--cg-ease);
+}
+
+[id^="chat-messages-"]:hover {
+  background: rgb(var(--cg-primary-fixed) / 0.04);
+}
+
+[id^="chat-messages-"] [class*="username_"] {
+  color: rgb(var(--cg-primary-fixed-dim));
+}
+
+[id^="chat-messages-"] time {
+  color: var(--cg-text-muted);
+}
+
+/* Divisor de data */
+[class*="divider_"][class*="hasContent"] {
+  border-color: var(--cg-border-strong);
+}
+
+/* Menções, links e código */
+[class*="mention"] {
+  background: rgb(var(--cg-primary) / 0.18);
+  color: rgb(var(--cg-primary-fixed));
+  border-radius: 6px;
+  transition: background var(--cg-ease);
+}
+
+[class*="mention"]:hover {
+  background: rgb(var(--cg-primary) / 0.32);
+}
+
+[id^="chat-messages-"] a:not([class*="mention"]) {
+  color: rgb(var(--cg-primary-fixed-dim));
+}
+
+code,
+pre {
+  background: rgb(var(--cg-on-primary) / 0.55);
+  border: 1px solid var(--cg-border);
+  border-radius: var(--cg-r-sm);
+}
+
+/* Cartões e pré-visualizações (embeds) */
+[class*="embedWrapper_"],
+[class*="embedFull_"] {
+  background: rgb(var(--cg-on-primary-fixed) / 0.55);
+  border: 1px solid var(--cg-border);
+  border-radius: var(--cg-r-md);
+  box-shadow: var(--cg-highlight);
+}
+
+/* Barra de resposta */
+[class*="replyBar_"] {
+  background: rgb(var(--cg-on-primary-fixed) / 0.55);
+  border: 1px solid var(--cg-border);
+  border-radius: var(--cg-r-sm) var(--cg-r-sm) 0 0;
+}
+
+/* Campo de digitação */
+[class*="channelTextArea_"] {
+  background: transparent;
+}
+
+[class*="channelTextArea_"] [class*="scrollableContainer_"] {
+  background: var(--cg-glass-field);
+  -webkit-backdrop-filter: blur(var(--cg-blur-panel)) saturate(var(--cg-saturate));
+  backdrop-filter: blur(var(--cg-blur-panel)) saturate(var(--cg-saturate));
+  border: 1px solid var(--cg-border-strong);
+  border-radius: var(--cg-r-md);
+  box-shadow: var(--cg-shadow-panel), var(--cg-highlight);
+  transition: border-color var(--cg-ease), box-shadow var(--cg-ease);
+}
+
+[class*="channelTextArea_"] [class*="scrollableContainer_"]:focus-within {
+  border-color: rgb(var(--cg-primary) / 0.55);
+}
+
+[class*="channelTextArea_"] [role="textbox"] {
+  color: var(--cg-text);
+}
+
+/* ==========================================================================
+   6. LISTA DE MEMBROS
+   ========================================================================== */
+
+[class*="membersWrap_"] {
+  background: rgb(var(--cg-on-primary-fixed) / 0.28);
+  border-left: 1px solid var(--cg-border);
+}
+
+[class*="members_"] [class*="membersGroup_"] {
+  color: var(--cg-text-muted);
+  letter-spacing: 0.04em;
+}
+
+[class*="members_"] [class*="member_"] {
+  border-radius: var(--cg-r-sm);
+  transition: background var(--cg-ease);
+}
+
+[class*="members_"] [class*="member_"]:hover {
+  background: var(--cg-hover);
+}
+
+[class*="members_"] [class*="member_"][class*="offline"] {
+  opacity: 0.55;
+}
+
+/* ==========================================================================
+   7. MENUS E JANELAS
+   ========================================================================== */
+
+/* Menus de contexto e suspensos */
+[role="menu"],
+[role="listbox"],
+[class*="popout_"] [class*="container_"][class*="menu"] {
+  background: var(--cg-glass-float);
+  -webkit-backdrop-filter: blur(var(--cg-blur-float)) saturate(var(--cg-saturate));
+  backdrop-filter: blur(var(--cg-blur-float)) saturate(var(--cg-saturate));
+  border: 1px solid var(--cg-border-strong);
+  border-radius: var(--cg-r-md);
+  box-shadow: var(--cg-shadow-float), var(--cg-highlight);
+}
+
+[role="menuitem"],
+[role="option"] {
+  border-radius: var(--cg-r-sm);
+  transition: background var(--cg-ease), color var(--cg-ease);
+}
+
+/* Hover/foco em pêssego sólido (itens de perigo mantêm o vermelho do Discord) */
+[role="menuitem"][class*="focused"]:not([class*="colorDanger"]),
+[role="option"][class*="focused"],
+[role="option"][aria-selected="true"] {
+  background: rgb(var(--cg-primary));
+  color: rgb(var(--cg-on-primary));
+}
+
+[role="menuitem"][class*="focused"]:not([class*="colorDanger"]) *,
+[role="option"][class*="focused"] * {
+  color: inherit;
+}
+
+[role="separator"],
+[class*="separator_"][role="separator"] {
+  background: var(--cg-border);
+}
+
+/* Popouts (cartão de usuário, seletores) */
+[class*="userPopoutOuter_"],
+[class*="userProfileOuter_"],
+[class*="userProfileInnerThemedWithBanner_"],
+[class*="popout_"][class*="elevation"] {
+  background: var(--cg-glass-float);
+  -webkit-backdrop-filter: blur(var(--cg-blur-float)) saturate(var(--cg-saturate));
+  backdrop-filter: blur(var(--cg-blur-float)) saturate(var(--cg-saturate));
+  border: 1px solid var(--cg-border-strong);
+  border-radius: var(--cg-r-lg);
+  box-shadow: var(--cg-shadow-float), var(--cg-highlight);
+}
+
+/* Janelas modais */
+[class*="backdrop_"][class*="withLayer"],
+[class*="backdrop_"] {
+  background-color: rgb(var(--cg-on-primary) / 0.55);
+}
+
+[role="dialog"][class*="root_"],
+[role="dialog"][class*="modal"] {
+  background: var(--cg-glass-float);
+  -webkit-backdrop-filter: blur(var(--cg-blur-float)) saturate(var(--cg-saturate));
+  backdrop-filter: blur(var(--cg-blur-float)) saturate(var(--cg-saturate));
+  border: 1px solid var(--cg-border-strong);
+  border-radius: var(--cg-r-lg);
+  box-shadow: var(--cg-shadow-float), var(--cg-highlight);
+  overflow: hidden;
+}
+
+[role="dialog"] [class*="footer_"] {
+  background: rgb(var(--cg-on-primary) / 0.45);
+  border-top: 1px solid var(--cg-border);
+}
+
+/* Dicas (tooltips) */
+[class*="tooltip_"] {
+  background: var(--cg-glass-float);
+  -webkit-backdrop-filter: blur(var(--cg-blur-rail));
+  backdrop-filter: blur(var(--cg-blur-rail));
+  border: 1px solid var(--cg-border-strong);
+  border-radius: var(--cg-r-sm);
+  color: var(--cg-text);
+}
+
+[class*="tooltipPointer_"] {
+  border-top-color: rgb(var(--cg-on-primary-fixed));
+}
+
+/* ==========================================================================
+   8. CONFIGURAÇÕES (inclui o perfil de usuário e a aba de temas do BD)
+   ========================================================================== */
+
+[class*="standardSidebarView_"] {
+  background: rgb(var(--cg-on-primary) / 0.72);
+  -webkit-backdrop-filter: blur(var(--cg-blur-float)) saturate(var(--cg-saturate));
+  backdrop-filter: blur(var(--cg-blur-float)) saturate(var(--cg-saturate));
+}
+
+[class*="sidebarRegion_"] {
+  background: rgb(var(--cg-on-primary-fixed) / 0.45);
+  border-right: 1px solid var(--cg-border);
+}
+
+[class*="contentRegion_"] {
+  background: transparent;
+}
+
+[class*="sidebarRegion_"] [role="tab"],
+[class*="sidebarRegion_"] [class*="item_"] {
+  border-radius: var(--cg-r-sm);
+  transition: background var(--cg-ease), color var(--cg-ease);
+}
+
+[class*="sidebarRegion_"] [role="tab"][aria-selected="true"],
+[class*="sidebarRegion_"] [class*="selected_"] {
+  background: var(--cg-select);
+  box-shadow: var(--cg-select-glow);
+  color: rgb(var(--cg-primary-fixed));
+}
+
+/* Cartões nas configurações */
+[class*="contentRegion_"] [class*="card_"],
+[class*="contentRegion_"] [class*="container_"][class*="Card"] {
+  background: rgb(var(--cg-on-primary-fixed) / 0.5);
+  border: 1px solid var(--cg-border);
+  border-radius: var(--cg-r-md);
+}
+
+/* ==========================================================================
+   9. BOTÕES E INTERAÇÕES
+   ========================================================================== */
+
+[class*="button_"][class*="lookFilled_"][class*="colorBrand_"] {
+  background: rgb(var(--cg-primary));
+  color: rgb(var(--cg-on-primary));
+  border-radius: var(--cg-r-sm);
+  transition: background var(--cg-ease), transform var(--cg-ease);
+}
+
+[class*="button_"][class*="lookFilled_"][class*="colorBrand_"]:hover {
+  background: rgb(var(--cg-primary-fixed-dim));
+}
+
+[class*="button_"][class*="lookFilled_"][class*="colorPrimary_"],
+[class*="button_"][class*="lookFilled_"][class*="colorGrey_"] {
+  background: rgb(var(--cg-primary-container) / 0.7);
+  color: var(--cg-text);
+  border-radius: var(--cg-r-sm);
+}
+
+[class*="button_"][class*="lookOutlined_"],
+[class*="button_"][class*="lookLink_"] {
+  border-radius: var(--cg-r-sm);
+}
+
+/* Campos de texto */
+input[type="text"],
+input[type="search"],
+input[type="password"],
+textarea,
+[class*="inputDefault_"] {
+  background: var(--cg-glass-field);
+  border: 1px solid var(--cg-border);
+  border-radius: var(--cg-r-sm);
+  color: var(--cg-text);
+  transition: border-color var(--cg-ease);
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+input[type="password"]:focus,
+textarea:focus {
+  border-color: rgb(var(--cg-primary) / 0.6);
+}
+
+/* Seleção de texto */
+::selection {
+  background: rgb(var(--cg-primary) / 0.4);
+  color: rgb(var(--cg-primary-fixed));
+}
+
+/* ==========================================================================
+   10. BARRAS DE ROLAGEM
+   ========================================================================== */
+
+[class*="scroller"]::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+[class*="scroller"]::-webkit-scrollbar-track {
+  background: transparent;
+  border: none;
+}
+
+[class*="scroller"]::-webkit-scrollbar-thumb {
+  background: rgb(var(--cg-primary) / 0.35);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: var(--cg-r-sm);
+}
+
+[class*="scroller"]::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--cg-primary) / 0.6);
+  background-clip: padding-box;
+}
+
+/* ==========================================================================
+   11. PAPEL DE PAREDE
+   --------------------------------------------------------------------------
+   Para usar uma imagem própria, defina --cg-wallpaper no bloco :root da
+   seção 1 (ou em um bloco seu depois deste tema), por exemplo:
+
+     --cg-wallpaper: url("https://exemplo.com/minha-imagem.jpg");
+
+   --cg-wallpaper-dim controla o escurecimento (0 a 1) para manter o contraste.
+   Sem imagem definida, o gradiente --cg-wallpaper-fallback é usado.
+   ========================================================================== */
+
+body {
+  background-image:
+    linear-gradient(rgb(var(--cg-on-primary) / var(--cg-wallpaper-dim)), rgb(var(--cg-on-primary) / var(--cg-wallpaper-dim))),
+    var(--cg-wallpaper),
+    var(--cg-wallpaper-fallback);
+  background-size: cover, cover, cover;
+  background-position: center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-attachment: fixed, fixed, fixed;
+}
+
+/* ==========================================================================
+   12. AJUSTES DE COMPATIBILIDADE
+   ========================================================================== */
+
+/* Sem suporte a backdrop-filter: aumenta a opacidade para manter a leitura */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --cg-glass-rail: rgb(var(--cg-on-primary) / 0.9);
+    --cg-glass-panel: rgb(var(--cg-on-primary-fixed) / 0.88);
+    --cg-glass-chat: rgb(var(--cg-on-primary) / 0.8);
+    --cg-glass-float: rgb(var(--cg-on-primary-fixed) / 0.97);
+  }
+}
+
+/* ==========================================================================
+   13. ACESSIBILIDADE E DESEMPENHO
+   ========================================================================== */
+
+:focus-visible {
+  outline: 2px solid rgb(var(--cg-primary-fixed-dim));
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --cg-ease: 0ms linear;
+  }
+}
+
+/* Usuários que pedem menos transparência recebem superfícies mais sólidas */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --cg-glass-rail: rgb(var(--cg-on-primary) / 0.95);
+    --cg-glass-panel: rgb(var(--cg-on-primary-fixed) / 0.95);
+    --cg-glass-chat: rgb(var(--cg-on-primary) / 0.92);
+    --cg-glass-float: rgb(var(--cg-on-primary-fixed) / 0.98);
+  }
+}
